@@ -116,4 +116,5 @@ def highlight_recommendation(val):
     color = '#c6efce' if val == 'Rute A' else '#ffc7ce'
     return f'background-color: {color}; color: black'
 
-st.dataframe(df_hasil.style.applymap(highlight_recommendation, subset=['Rekomendasi']), use_container_width=True)
+st.dataframe(df_hasil.style.map(highlight_recommendation, subset=['Rekomendasi']), use_container_width=True)
+
