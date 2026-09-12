@@ -11,7 +11,7 @@ st.set_page_config(page_title="Entropic Logistics Monitor", layout="wide")
 
 st.title("🌍 Global Mining Entropic Logistics Monitor")
 st.markdown("""
-Dashboard interaktif pengambilan keputusan rute armada tambang berbasis **Formalisme Konstanta Zuhri ($\pi_{eff}$)**. 
+Dashboard interaktif pengambilan keputusan rute armada tambang berbasis **Zero-Loss Routing Protoco**. 
 Sistem ini mengevaluasi rute dengan jejak entropi minimum untuk memaksimalkan efisiensi bahan bakar.
 """)
 
