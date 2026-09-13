@@ -7,25 +7,26 @@ import plotly.graph_objects as go
 # ==========================================
 # KONFIGURASI HALAMAN
 # ==========================================
-st.set_page_config(page_title="Entropic Logistics Monitor", layout="wide")
+st.set_page_config(page_title="Zero-Loss Logistics Monitor", layout="wide")
 
 st.title("🌍 Global Mining Entropic Logistics Monitor")
 st.markdown("""
-Dashboard interaktif pengambilan keputusan rute armada tambang berbasis **Zero-Loss Routing Protoco**. 
-Sistem ini mengevaluasi rute dengan jejak entropi minimum untuk memaksimalkan efisiensi bahan bakar.
+Dashboard interaktif pengambilan keputusan rute armada tambang yang ditenagai oleh **Zero-Loss Routing Protocol**. 
+Sistem ini mengevaluasi rute dengan jejak entropi minimum secara *real-time* untuk memaksimalkan efisiensi bahan bakar dan memangkas OPEX.
 """)
 
 # ==========================================
 # SIDEBAR: KONTROL PARAMETER INTERAKTIF
 # ==========================================
 st.sidebar.header("⚙️ Parameter Geometris")
-pi_eff = st.sidebar.number_input("Konstanta Zuhri (π_eff)", value=1.618, format="%.3f")
+# Mengganti nama label UI agar lebih komersial, nilai dasar algoritma tetap sama
+core_multiplier = st.sidebar.number_input("Zero-Loss Core Multiplier", value=1.618, format="%.3f")
 G = 9.81
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("🛣️ Kondisi Rute A")
 route_a_theta = st.sidebar.slider("Kemiringan Rute A (Derajat)", 0.0, 25.0, 5.0)
-route_a_mu = st.sidebar.slider("Gesekan Rute A (μ) - (Makin besar makin licin/berlumpur)", 0.1, 1.0, 0.4)
+route_a_mu = st.sidebar.slider("Gesekan Rute A (μ) - (Licin/Berlumpur)", 0.1, 1.0, 0.4)
 
 st.sidebar.markdown("---")
 st.sidebar.subheader("🛣️ Kondisi Rute B")
@@ -35,14 +36,18 @@ route_b_mu = st.sidebar.slider("Gesekan Rute B (μ) - (Kering/Berbatu)", 0.1, 1.
 # ==========================================
 # FUNGSI KALKULASI & DUMMY DATA
 # ==========================================
-def calculate_entropic_loss(weight_ton, speed_ms, theta_deg, mu_friction, pi_val):
+def calculate_entropic_loss(weight_ton, speed_ms, theta_deg, mu_friction, protocol_val):
     weight_kg = weight_ton * 1000
     theta_rad = math.radians(theta_deg)
+    
+    # Kalkulasi Gaya Gravitasi dan Gesekan
     force_gravity = weight_kg * G * math.sin(theta_rad)
     force_friction = mu_friction * weight_kg * G * math.cos(theta_rad)
-    return ((force_gravity + force_friction) * speed_ms) / pi_val
+    
+    # Zero-Loss Routing Equation
+    return ((force_gravity + force_friction) * speed_ms) / protocol_val
 
-# Menggunakan np.random.seed agar data truk tidak berubah-ubah saat slider digeser
+# Menggunakan np.random.seed agar data truk stabil saat dipresentasikan
 np.random.seed(42)
 num_trucks = 10
 truck_ids = [f"TRK-{100+i}" for i in range(1, num_trucks + 1)]
@@ -63,8 +68,9 @@ for index, row in df_trucks.iterrows():
     w = row["Muatan_Ton"]
     v = row["Kecepatan_ms"]
     
-    e_a = calculate_entropic_loss(w, v, route_a_theta, route_a_mu, pi_eff)
-    e_b = calculate_entropic_loss(w, v, route_b_theta, route_b_mu, pi_eff)
+    # Evaluasi kedua rute
+    e_a = calculate_entropic_loss(w, v, route_a_theta, route_a_mu, core_multiplier)
+    e_b = calculate_entropic_loss(w, v, route_b_theta, route_b_mu, core_multiplier)
     
     best_route = "Rute A" if e_a < e_b else "Rute B"
     saved = abs(e_a - e_b)
@@ -90,12 +96,12 @@ efficiency_gain = (total_saved / total_loss_if_wrong) * 100
 col1, col2, col3 = st.columns(3)
 col1.metric("Total Armada Beroperasi", f"{num_trucks} Unit")
 col2.metric("Total Energi Diselamatkan", f"{total_saved:,.0f} Joule/s", "Real-time")
-col3.metric("Estimasi Peningkatan Efisiensi", f"{efficiency_gain:.1f}%", "BBM Saved")
+col3.metric("Estimasi Efisiensi OPEX", f"{efficiency_gain:.1f}%", "BBM Saved")
 
 st.markdown("---")
 
 # 2. Grafik Plotly Interaktif
-st.subheader("📊 Perbandingan Entropi per Unit Armada")
+st.subheader("📊 Analisis Entropi per Unit Armada")
 fig = go.Figure()
 fig.add_trace(go.Bar(x=df_hasil['ID_Truk'], y=df_hasil['E_Loss_Rute_A'], name='Rute A', marker_color='#E55451'))
 fig.add_trace(go.Bar(x=df_hasil['ID_Truk'], y=df_hasil['E_Loss_Rute_B'], name='Rute B', marker_color='#2E8B57'))
@@ -109,12 +115,10 @@ fig.update_layout(
 )
 st.plotly_chart(fig, use_container_width=True)
 
-# 3. Tabel Data Detail
-st.subheader("📋 Log Keputusan Sistem Rekomendasi")
-# Memberikan warna pada kolom rekomendasi
+# 3. Tabel Data Detail (Sudah menggunakan .map() yang diperbarui)
+st.subheader("📋 Log Keputusan Zero-Loss Protocol")
 def highlight_recommendation(val):
     color = '#c6efce' if val == 'Rute A' else '#ffc7ce'
     return f'background-color: {color}; color: black'
 
 st.dataframe(df_hasil.style.map(highlight_recommendation, subset=['Rekomendasi']), use_container_width=True)
-
